@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Room: La Porta</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #222;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Scena e Porta --- */
+        #scene {
+            width: 300px;
+            height: 500px;
+            perspective: 1000px;
+            transition: transform 1.5s ease-in-out;
+            transform-origin: 80% 55%; /* Punto focale sulla serratura */
+            cursor: pointer;
+        }
+
+        .door-frame {
+            width: 100%;
+            height: 100%;
+            background-color: #444;
+            border: 10px solid #1a1a1a;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .door {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #5d4037, #3e2723);
+            position: relative;
+            border: 2px solid #3e2723;
+        }
+
+        .handle-plate {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            width: 40px;
+            height: 80px;
+            background-color: #ffd700; /* Oro */
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .keyhole {
+            width: 10px;
+            height: 15px;
+            background-color: #000;
+            border-radius: 10px 10px 2px 2px;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        /* Chiave stilizzata (visibile solo per riferimento visuale) */
+        .key-head {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 4px solid #c0c0c0;
+            border-radius: 50%;
+            top: 55px; /* Posizionata sopra la toppa */
+            right: 25px;
+            transform: translateZ(10px);
+            transition: transform 0.3s;
+            pointer-events: none; /* Lascia passare i click */
+            display: none; /* Appare solo dopo lo zoom */
+        }
+        
+        /* Rappresentazione della chiave inserita */
+        .inserted-key {
+            width: 40px;
+            height: 10px;
+            background: #c0c0c0;
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform-origin: center;
+            display: none; /* Appare dopo zoom */
+            z-index: 10;
+        }
+
+        /* --- Stati --- */
+        .zoomed {
+            transform: scale(6); /* Effetto Zoom */
+            cursor: default;
+        }
+
+        /* --- Interfaccia Controlli --- */
+        #ui-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 20px;
+            z-index: 100;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #444;
+            color: white;
+            border: 1px solid #666;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover { background-color: #666; }
+
+        /* --- Messaggi e Overlay --- */
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        #timer-display {
+            font-size: 40px;
+            color: red;
+            margin-top: 20px;
+            display: none;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 18px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .success-msg { color: #4CAF50; font-size: 24px; font-weight: bold; }
+        .error-msg { color: #f44336; font-size: 24px; font-weight: bold; }
+        
+        .instruction {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="instruction" id="main-instruction">Clicca sulla porta per esaminare la serratura</div>
+
+    <div id="scene" onclick="zoomIn()">
+        <div class="door-frame">
+            <div class="door">
+                <div class="handle-plate">
+                    <div style="width: 30px; height: 30px; background: #c5a000; border-radius: 50%; margin-bottom: 5px;"></div>
+                    <div class="keyhole"></div>
+                </div>
+                <div class="inserted-key" id="visual-key"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ui-controls">
+        <p>In che direzione vuoi girare la chiave?</p>
+        <button class="btn" onclick="turnLeft()">↺ Antiorario (Sinistra)</button>
+        <button class="btn" onclick="turnRight()">↻ Orario (Destra)</button>
+    </div>
+
+    <div id="overlay">
+        <div id="password-box">
+            <h2>Inserisci la Password</h2>
+            <input type="text" id="passwordInput" placeholder="Password..." autocomplete="off">
+            <br>
+            <button class="btn" onclick="checkPassword()">Conferma</button>
+            <button class="btn" onclick="closeOverlay()" style="background:#888">Annulla</button>
+        </div>
+        
+        <div id="result-message"></div>
+        <div id="timer-display">02:00</div>
+    </div>
+
+    <script>
+        let isZoomed = false;
+        let isLockedOut = false;
+
+        // Funzione Zoom
+        function zoomIn() {
+            if (isZoomed || isLockedOut) return;
+            
+            const scene = document.getElementById('scene');
+            const key = document.getElementById('visual-key');
+            const controls = document.getElementById('ui-controls');
+            const instruct = document.getElementById('main-instruction');
+
+            scene.classList.add('zoomed');
+            
+            // Ritardo per mostrare i controlli dopo l'animazione
+            setTimeout(() => {
+                key.style.display = 'block'; // Mostra la chiave
+                controls.style.display = 'block';
+                instruct.style.display = 'none';
+                isZoomed = true;
+            }, 1000);
+        }
+
+        // Animazione rotazione chiave
+        function rotateKeyVisual(direction) {
+            const key = document.getElementById('visual-key');
+            const deg = direction === 'left' ? -90 : 90;
+            key.style.transition = "transform 0.5s";
+            key.style.transform = `rotate(${deg}deg)`;
+            
+            // Reset posizione dopo 1 secondo
+            setTimeout(() => {
+                key.style.transform = `rotate(0deg)`;
+            }, 1000);
+        }
+
+        // Azione: Gira a Destra (Orario) -> Click sonoro
+        function turnRight() {
+            rotateKeyVisual('right');
+            playClickSound();
+        }
+
+        // Azione: Gira a Sinistra (Antiorario) -> Password
+        function turnLeft() {
+            rotateKeyVisual('left');
+            setTimeout(() => {
+                showPasswordPrompt();
+            }, 500);
+        }
+
+        // Generatore di suono "Click" meccanico (Web Audio API)
+        function playClickSound() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return; // Niente audio se non supportato
+            
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            osc.type = 'square';
+            osc.frequency.value = 150; // Tono basso
+            gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
+
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+        }
+
+        // Gestione Overlay Password
+        function showPasswordPrompt() {
+            const overlay = document.getElementById('overlay');
+            const pwdBox = document.getElementById('password-box');
+            overlay.style.display = 'flex';
+            pwdBox.style.display = 'block';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+        }
+
+        function closeOverlay() {
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        // Logica verifica Password
+        function checkPassword() {
+            const input = document.getElementById('passwordInput').value.trim();
+            const correctKeyword = "Mark_Zuckerberg";
+            const resultMsg = document.getElementById('result-message');
+            const pwdBox = document.getElementById('password-box');
+
+            pwdBox.style.display = 'none'; // Nascondi input
+
+            if (input.toLowerCase() === correctKeyword.toLowerCase()) {
+                // SUCCESSO
+                resultMsg.innerHTML = '<div class="success-msg">COMPLIMENTI!<br>Siete riusciti ad evadere.</div>';
+            } else {
+                // ERRORE
+                resultMsg.innerHTML = '<div class="error-msg">PASSWORD ERRATA!<br>Aspetta il timer prima di riprovare...</div>';
+                startTimer();
+            }
+        }
+
+        // Timer 2 minuti
+        function startTimer() {
+            isLockedOut = true;
+            const timerDisplay = document.getElementById('timer-display');
+            timerDisplay.style.display = 'block';
+            
+            // Nascondi controlli principali per impedire altri tentativi
+            document.getElementById('ui-controls').style.display = 'none';
+
+            let timeLeft = 120; // 2 minuti in secondi
+
+            const countdown = setInterval(() => {
+                timeLeft--;
+                
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                
+                // Formattazione 00:00
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+                
+                timerDisplay.innerText = `${minutes}:${seconds}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    location.reload(); // Ricarica la pagina
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

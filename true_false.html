@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucchetto con Combinazione</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .image-container {
+            width: 100%;
+            /*height: 250px;*/
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .placeholder {
+            color: #999;
+            font-size: 18px;
+        }
+
+        .lock-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .combination-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .digit-input {
+            width: 60px;
+            height: 80px;
+            font-size: 36px;
+            text-align: center;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .digit-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: bold;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalAppear 0.3s ease-out;
+        }
+
+        @keyframes modalAppear {
+            from {
+                transform: scale(0.7);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-letter {
+            font-size: 120px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 20px 0;
+        }
+
+        .close-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .timer-modal .modal-content {
+            background: #ff5252;
+            color: white;
+        }
+
+        .timer-display {
+            font-size: 80px;
+            font-weight: bold;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-message {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .error-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="image-container">
+            <img src="img/vero_falso.JPG"/>
+        </div>
+
+        <div class="lock-icon">🔒</div>
+        
+        <h2>Inserisci la combinazione</h2>
+        
+        <div class="combination-inputs">
+            <input type="number" class="digit-input" maxlength="1" min="0" max="9" id="digit1">
+            <input type="number" class="digit-input" maxlength="1" min="0" max="9" id="digit2">
+            <input type="number" class="digit-input" maxlength="1" min="0" max="9" id="digit3">
+            <input type="number" class="digit-input" maxlength="1" min="0" max="9" id="digit4">
+        </div>
+
+        <button class="submit-btn" onclick="checkCombination()">Sblocca</button>
+    </div>
+
+    <!-- Modal Successo -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div>✓</div>
+            <div class="success-letter">M</div>
+            <h2>Combinazione Corretta!</h2>
+            <button class="close-btn" onclick="closeSuccess()">Chiudi</button>
+        </div>
+    </div>
+
+    <!-- Modal Timer -->
+    <div class="modal timer-modal" id="timerModal">
+        <div class="modal-content">
+            <div class="error-icon">⚠️</div>
+            <h2 class="timer-message">Combinazione Errata!</h2>
+            <div class="timer-display" id="timerDisplay">01:00</div>
+            <p>Attendi prima di riprovare...</p>
+        </div>
+    </div>
+
+    <script>
+        // COMBINAZIONE CORRETTA (modificabile)
+        const CORRECT_COMBINATION = '0110';
+
+        let timerActive = false;
+        let timerInterval;
+
+        // Gestione input automatica
+        const inputs = document.querySelectorAll('.digit-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value;
+                if (value.length > 1) {
+                    e.target.value = value.slice(-1);
+                }
+                if (value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+                if (e.key === 'Enter') {
+                    checkCombination();
+                }
+            });
+        });
+
+        function checkCombination() {
+            if (timerActive) return;
+
+            const combination = Array.from(inputs).map(input => input.value).join('');
+            
+            if (combination.length !== 4) {
+                alert('Inserisci tutti e 4 i numeri!');
+                return;
+            }
+
+            if (combination === CORRECT_COMBINATION) {
+                showSuccess();
+            } else {
+                showTimer();
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('successModal').classList.add('active');
+        }
+
+        function closeSuccess() {
+            document.getElementById('successModal').classList.remove('active');
+            resetInputs();
+        }
+
+        function showTimer() {
+            timerActive = true;
+            const modal = document.getElementById('timerModal');
+            const display = document.getElementById('timerDisplay');
+            modal.classList.add('active');
+
+            let timeLeft = 60;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    modal.classList.remove('active');
+                    timerActive = false;
+                    resetInputs();
+                }
+            }, 1000);
+        }
+
+        function resetInputs() {
+            inputs.forEach(input => input.value = '');
+            inputs[0].focus();
+        }
+
+        // Focus automatico sul primo input
+        inputs[0].focus();
+    </script>
+</body>
+</html>
