@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Vicolo Cieco Digitale</title>
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #00ff41; /* Verde Terminale */
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        .terminal-window {
+            border: 2px solid #00ff41;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            border-radius: 5px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+            position: relative;
+        }
+
+        /* Effetto linea di scansione CRT (opzionale, per stile retro) */
+        .terminal-window::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 2em;
+            border-bottom: 1px dashed #00ff41;
+            padding-bottom: 10px;
+        }
+
+        .error-code {
+            color: #ff3b3b; /* Rosso errore */
+            font-weight: bold;
+        }
+
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background-color: #00ff41;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .ascii-art {
+            white-space: pre;
+            font-size: 12px;
+            color: #00ff41;
+            margin: 20px 0;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .btn-back {
+            background-color: transparent;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-back:hover {
+            background-color: #00ff41;
+            color: #000;
+            box-shadow: 0 0 15px #00ff41;
+        }
+
+        /* Per evidenziare comandi o percorsi */
+        .code-snippet {
+            background-color: #1a1a1a;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="terminal-window">
+        <h1>> SYSTEM_ERROR</h1>
+        
+        <p>
+            <span class="error-code">Error 404:</span> Logic Not Found.<br>
+            <span class="error-code">Status:</span> Lost in /dev/null
+        </p>
+
+
+        <p>
+            Sembra che tu abbia preso una diramazione <span class="code-snippet">False</span> in un bivio che portava al nulla.<br>
+            Qui non c'è niente, a parte bit polverosi e variabili non dichiarate.
+        </p>
+        
+        <p>Non preoccuparti, è un bug noto nell'orientamento umano.</p>
+
+        <p>
+            root@user:~# <span class="cursor"></span>
+        </p>
+
+        <button class="btn-back" onclick="history.back()">
+            &lt; Esegui return_home(); /&gt;
+        </button>
+    </div>
+
+</body>
+</html>
