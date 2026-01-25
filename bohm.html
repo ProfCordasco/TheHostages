@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collega i Diagrammi di Flusso - Con Penalità</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            user-select: none; /* Evita selezioni accidentali durante il drag */
+        }
+
+        h1 { color: #333; margin-bottom: 30px; }
+
+        /* --- Layout Principale --- */
+        .game-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 900px;
+            gap: 50px;
+        }
+
+        /* Colonna Immagini (Drop Zones) */
+        .images-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Spazio aumentato tra le immagini */
+        }
+
+        .drop-zone {
+            border: 3px dashed #ccc;
+            border-radius: 10px;
+            padding: 15px;
+            background-color: white;
+            min-height: 180px; /* Leggermente più grandi */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Allinea l'immagine in alto */
+            transition:all 0.3s ease;
+            position: relative;
+        }
+
+        .drop-zone img {
+            max-width: 100%;
+            max-height: 170px; /* Altezza massima aumentata */
+            /* Aggiunto cursore per indicare che si può ingrandire */
+            cursor: zoom-in; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+        
+        .drop-zone img:hover {
+             transform: scale(1.02);
+        }
+
+        /* Stati della Drop Zone */
+        .drop-zone.hovered {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+            transform: scale(1.02);
+        }
+
+        .drop-zone.correct {
+            border-color: #4caf50;
+            background-color: #e8f5e9;
+            border-style: solid;
+        }
+
+        /* Colonna Parole (Draggables) */
+        .words-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .draggable-word {
+            background-color: #2196f3;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: grab;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background-color 0.2s;
+            z-index: 10; /* Assicura che stia sopra durante il trascinamento */
+        }
+
+        .draggable-word:active {
+            cursor: grabbing;
+            transform: scale(0.95) rotate(-2deg);
+            background-color: #1976d2;
+        }
+
+        /* Stile parola posizionata */
+        .word-placed {
+            background-color: transparent;
+            color: #2e7d32;
+            box-shadow: none;
+            font-size: 1.6rem;
+            cursor: default;
+            margin-top: 15px;
+            padding: 5px;
+            border-bottom: 2px solid #4caf50;
+        }
+
+        .highlight-char {
+            font-weight: 900;
+            color: #d32f2f;
+            font-size: 1.3em;
+        }
+
+        /* --- MODALI E OVERLAY --- */
+
+        /* 1. Modale Zoom Immagine */
+        #imageZoomModal {
+            display: none; /* Nascosto di default */
+            position: fixed;
+            z-index: 2000; /* Molto alto */
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+        #zoomedImage {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+
+        /* 2. Overlay Penalità (Blocco Pagina) */
+        #penaltyOverlay {
+            display: none; /* Nascosto di default */
+            position: fixed;
+            z-index: 9999; /* Altissimo, sopra tutto */
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(139, 0, 0, 0.95); /* Rosso scuro semi-trasparente */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+        #penaltyOverlay h2 { font-size: 3em; margin: 0; }
+        #penaltyTimerDisplay { font-size: 5em; font-weight: bold; font-family: monospace; margin: 20px 0; }
+        #penaltyOverlay p { font-size: 1.5em; }
+
+
+        /* Adattamento Mobile */
+        @media (max-width: 768px) {
+            .game-container { flex-direction: column; }
+            .words-column { flex-direction: row; flex-wrap: wrap; position: static; }
+            .drop-zone { min-height: 150px; }
+            .drop-zone img { max-height: 140px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Collega il concetto al diagramma</h1>
+    <p>Trascina la parola corretta sotto l'immagine. Clicca sulle immagini per ingrandirle.</p>
+
+    <div class="game-container">
+        
+        <div class="images-column">
+            <div class="drop-zone" data-target="sequenza">
+                <img src="img/seq.JPG" alt="Diagramma Sequenza" class="zoomable">
+            </div>
+            <div class="drop-zone" data-target="iterazione">
+                <img src="img/iter.JPG" alt="Diagramma Iterazione" class="zoomable">
+            </div>
+            <div class="drop-zone" data-target="selezione">
+                <img src="img/sel.JPG" alt="Diagramma Selezione" class="zoomable">
+            </div>
+        </div>
+
+        <div class="words-column">
+            <div class="draggable-word" draggable="true" data-id="selezione">SELEZIONE</div>
+            <div class="draggable-word" draggable="true" data-id="sequenza">SEQUENZA</div>
+            <div class="draggable-word" draggable="true" data-id="iterazione">ITERAZIONE</div>
+        </div>
+
+    </div>
+
+    <div id="imageZoomModal">
+        <img id="zoomedImage" src="" alt="Immagine Ingrandita">
+    </div>
+
+    <div id="penaltyOverlay">
+        <h2>ERRORE!</h2>
+        <p>Pagina bloccata per:</p>
+        <div id="penaltyTimerDisplay">60</div>
+        <p>secondi</p>
+    </div>
+
+    <script>
+        const draggables = document.querySelectorAll('.draggable-word');
+        const dropZones = document.querySelectorAll('.drop-zone');
+        
+        // Elementi per lo zoom
+        const zoomModal = document.getElementById('imageZoomModal');
+        const zoomedImage = document.getElementById('zoomedImage');
+        const zoomableImages = document.querySelectorAll('.zoomable');
+
+        // Elementi per la penalità
+        const penaltyOverlay = document.getElementById('penaltyOverlay');
+        const timerDisplay = document.getElementById('penaltyTimerDisplay');
+        let penaltyActive = false;
+
+        // --- GESTIONE ZOOM IMMAGINI ---
+        zoomableImages.forEach(img => {
+            img.addEventListener('click', function() {
+                if(penaltyActive) return; // Non ingrandire se in penalità
+                zoomedImage.src = this.src;
+                zoomModal.style.display = 'flex';
+            });
+        });
+
+        zoomModal.addEventListener('click', function() {
+            this.style.display = 'none';
+        });
+
+
+        // --- GESTIONE DRAG AND DROP ---
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', () => {
+                if(penaltyActive) {
+                    e.preventDefault(); return;
+                }
+                draggable.classList.add('dragging');
+            });
+
+            draggable.addEventListener('dragend', () => {
+                draggable.classList.remove('dragging');
+            });
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if(penaltyActive) return;
+
+                const draggable = document.querySelector('.dragging');
+                if(!draggable || zone.classList.contains('correct')) return;
+                
+                zone.classList.add('hovered');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('hovered');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if(penaltyActive) return; // Blocco ulteriore sicurezza
+
+                zone.classList.remove('hovered');
+
+                const draggable = document.querySelector('.dragging');
+                if(!draggable) return;
+
+                const draggableId = draggable.getAttribute('data-id');
+                const zoneTarget = zone.getAttribute('data-target');
+
+                if (draggableId === zoneTarget) {
+                    // RISPOSTA CORRETTA
+                    handleCorrectDrop(zone, draggable, draggableId);
+                } else {
+                    // RISPOSTA SBAGLIATA -> PENALITÀ
+                    startPenaltyTimer();
+                }
+            });
+        });
+
+
+        // --- FUNZIONI DI SUPPORTO ---
+
+        function handleCorrectDrop(zone, element, type) {
+            zone.appendChild(element);
+            zone.classList.add('correct');
+            element.classList.remove('draggable-word');
+            element.classList.add('word-placed');
+            element.setAttribute('draggable', 'false');
+            // Rimuoviamo l'immagine dalla tab index per evitare che venga selezionata dopo aver risposto
+            zone.querySelector('img').style.pointerEvents = 'none'; 
+
+            if (type === 'sequenza') {
+                element.innerHTML = "S<span class='highlight-char'>E</span>QUENZA";
+            } else if (type === 'iterazione') {
+                element.innerHTML = "ITE<span class='highlight-char'>R</span>AZIONE";
+            } else if (type === 'selezione') {
+                element.innerHTML = "SELEZIONE";
+            }
+        }
+
+        function startPenaltyTimer() {
+            penaltyActive = true;
+            penaltyOverlay.style.display = 'flex';
+            let timeLeft = 60;
+            timerDisplay.textContent = timeLeft;
+
+            const countdown = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    penaltyOverlay.style.display = 'none';
+                    penaltyActive = false;
+                }
+            }, 1000);
+        }
+
+    </script>
+</body>
+</html>

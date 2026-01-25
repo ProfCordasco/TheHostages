@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scegli il flowchart giusto</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 50px;
+            user-select: none; /* Impedisce la selezione del testo */
+        }
+
+        h1 { color: #333; }
+
+        /* Stile dell'avviso */
+        .warning-box {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px auto;
+            max-width: 600px;
+            font-weight: bold;
+        }
+
+        /* Contenitore delle immagini */
+        .image-container {
+            justify_content: center;
+
+            gap: 50px;
+            margin-top: 40px;
+        }
+
+        .animal-img {
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background-color: white;
+        }
+
+        .animal-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Stile del Popup "Successo" (Il cammello) */
+        #successModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: white;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        #underscoreChar {
+            color: black;
+            font-size: 200px; /* Carattere molto grande */
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        #closeModal {
+            position: absolute;
+            top: 20px; right: 30px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        /* Stile del Blocco Pagina (Il serpente) */
+        #penaltyOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(139, 0, 0, 0.95); /* Rosso scuro quasi opaco */
+            color: white;
+            z-index: 9999; /* Sopra ogni cosa */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #timer {
+            font-size: 80px;
+            font-weight: bold;
+            font-family: monospace;
+            margin: 20px 0;
+        }
+
+        .penalty-text {
+            font-size: 24px;
+            max-width: 80%;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Scegli il flowchart corretto per il seguente pseudocodice:</h1>
+	
+	<img src="img/pseudo1_2.JPG"/>
+	
+    <div class="warning-box">
+        ⚠️ ATTENZIONE: Se sbagli la risposta, riceverai una penalità e la pagina rimarrà bloccata per 3 minuti!
+    </div>
+
+    <div class="image-container">
+	
+		<img src="img/pseudo3_2.jpg" alt="Media 3" class="animal-img" id="media3Btn">
+        <img src="img/pseudo4_2.jpg" alt="Media 1" class="animal-img" id="media2Btn">
+        <img src="img/pseudo2_2.jpg" alt="Media 2" class="animal-img" id="media1Btn">
+		
+		
+    </div>
+
+    <div id="successModal">
+        <span id="closeModal">&times;</span>
+        <div id="underscoreChar">E</div>
+    </div>
+
+    <div id="penaltyOverlay">
+        <div class="penalty-text">HAI SBAGLIATO!</div>
+        <div class="penalty-text">La pagina è bloccata. Attendi la fine della penalità.</div>
+        <div id="timer">03:00</div>
+    </div>
+
+    <script>
+        // Selezione elementi
+        const media1Btn = document.getElementById('media1Btn');
+        const media2Btn = document.getElementById('media2Btn');
+		const media3Btn = document.getElementById('media3Btn');
+        const successModal = document.getElementById('successModal');
+        const closeModal = document.getElementById('closeModal');
+        const penaltyOverlay = document.getElementById('penaltyOverlay');
+        const timerDisplay = document.getElementById('timer');
+
+        // --- Logica Cammello (Successo) ---
+        media1Btn.addEventListener('click', () => {
+            successModal.style.display = 'flex';
+        });
+
+        // Chiudi modale successo
+        closeModal.addEventListener('click', () => {
+            successModal.style.display = 'none';
+        });
+
+        // Chiudi modale cliccando fuori
+        successModal.addEventListener('click', (e) => {
+            if (e.target === successModal) {
+                successModal.style.display = 'none';
+            }
+        });
+
+        // --- Logica Serpente (Penalità) ---
+        media2Btn.addEventListener('click', () => {
+            startPenaltyTimer(180); // 180 secondi = 3 minuti
+        });
+		
+		media3Btn.addEventListener('click', () => {
+            startPenaltyTimer(180); // 180 secondi = 3 minuti
+        });
+
+        function startPenaltyTimer(duration) {
+            // Mostra l'overlay che blocca tutto
+            penaltyOverlay.style.display = 'flex';
+            
+            let timer = duration, minutes, seconds;
+            
+            // Aggiorna subito il display prima che parta l'intervallo
+            updateDisplay(timer);
+
+            const interval = setInterval(function () {
+                timer--;
+                updateDisplay(timer);
+
+                if (timer < 0) {
+                    clearInterval(interval);
+                    // Rimuovi il blocco
+                    penaltyOverlay.style.display = 'none';
+                    alert("Penalità terminata. Puoi riprovare.");
+                }
+            }, 1000);
+        }
+
+        function updateDisplay(timer) {
+            let minutes = parseInt(timer / 60, 10);
+            let seconds = parseInt(timer % 60, 10);
+
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            timerDisplay.textContent = minutes + ":" + seconds;
+        }
+    </script>
+</body>
+</html>
