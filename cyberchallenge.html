@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Challenge</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #2b5c9a;
+      color: white;
+      text-align: center;
+    }
+
+    .container {
+      margin-top: 150px;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 22px;
+    }
+
+    .btn-container {
+      margin-top: 40px;
+      position: relative;
+    }
+
+    .line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 10px;
+      background-color: #e74c3c;
+      transform: translateY(-50%);
+      z-index: 0;
+    }
+
+    button {
+      position: relative;
+      z-index: 1;
+      background-color: #e74c3c;
+      border: none;
+      padding: 15px 40px;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #hint {
+      margin-top: 30px;
+      font-size: 20px;
+      display: none;
+    }
+
+    #segreto {
+      display: none;
+    }
+  </style>
+
+  <script>
+    window.onload = function () {
+      const ua = navigator.userAgent.toLowerCase();
+
+      if (!ua.includes("curl")) {
+        const el = document.getElementById("segreto");
+        if (el) el.remove();
+      }
+    };
+
+    function mostraHint() {
+      document.getElementById("hint").style.display = "block";
+    }
+  </script>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>Congratulazioni!</h1>
+    <p>Clicca qui per ottenere la flag:</p>
+
+    <div class="btn-container">
+      <div class="line"></div>
+      <button onclick="mostraHint()">OTTIENI LA FLAG</button>
+    </div>
+
+    <div id="hint">
+      
+      Non tutto si trova nel browser...<br>
+      Prova ad usare il <b>terminale</b><br>
+    </div>
+
+    <div id="segreto">
+      ITASEC{cybersecurity_challenge_25_26}
+    </div>
+  </div>
+
+</body>
+</html>
